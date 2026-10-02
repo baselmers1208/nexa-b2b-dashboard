@@ -401,6 +401,8 @@
           <th>Kanaal</th>
           <th>Leads</th>
           <th>Deals</th>
+          <th>Omzet</th>
+          <th>Pipeline</th>
           <th>CAC</th>
           <th>ROI</th>
         </tr></thead>
@@ -873,14 +875,16 @@ function filterByMonth(arr) {
 
 function renderKPIs() {
   const all = leads;
-  const month = filterByMonth(leads);
-  const pipeline = all.filter(l => ['Lead','Offerte verstuurd','Deal gesloten'].includes(l.status)).reduce((s,l) => s + l.waarde, 0);
-  const deals = all.filter(l => ['Deal gesloten','Tocht gedraaid'].includes(l.status));
+  // Pipeline = nog niet zeker (lead + offerte)
+  const pipelineLeads = all.filter(l => ['Lead','Offerte verstuurd'].includes(l.status));
+  const pipelineWaarde = pipelineLeads.reduce((s,l) => s + l.waarde, 0);
+  // Omzet = zeker geld (deal gesloten + tocht gedraaid)
+  const omzetLeads = all.filter(l => ['Deal gesloten','Tocht gedraaid'].includes(l.status));
+  const omzetWaarde = omzetLeads.reduce((s,l) => s + l.waarde, 0);
   const gedraaid = all.filter(l => l.status === 'Tocht gedraaid');
-  const omzetGedraaid = gedraaid.reduce((s,l) => s + l.waarde, 0);
+  const gedraaidWaarde = gedraaid.reduce((s,l) => s + l.waarde, 0);
   const maandKosten = costs.nielVast + costs.metaDag * 30 + costs.inbound;
 
-  // leads this month
   const now = new Date();
   const thisMonth = now.toISOString().slice(0,7);
   const monthLeads = all.filter(l => l.datum && l.datum.startsWith(thisMonth));
@@ -888,20 +892,15 @@ function renderKPIs() {
   const weekLeads = all.filter(l => l.datum && l.datum >= weekAgo);
 
   document.getElementById('kpi-grid').innerHTML = `
-    <div class="kpi accent">
-      <div class="kpi-label">Pipeline waarde</div>
-      <div class="kpi-value">${fmtEur(pipeline)}</div>
-      <div class="kpi-sub">${all.filter(l=>l.status!=='Verloren').length} actieve leads</div>
-    </div>
     <div class="kpi green">
-      <div class="kpi-label">Omzet gedraaid</div>
-      <div class="kpi-value">${fmtEur(omzetGedraaid)}</div>
-      <div class="kpi-sub">${gedraaid.length} tochten</div>
+      <div class="kpi-label">Omzet (deals + tochten)</div>
+      <div class="kpi-value">${fmtEur(omzetWaarde)}</div>
+      <div class="kpi-sub">${omzetLeads.length} deals — waarvan ${gedraaid.length} gedraaid (${fmtEur(gedraaidWaarde)})</div>
     </div>
-    <div class="kpi">
-      <div class="kpi-label">Deals gesloten</div>
-      <div class="kpi-value">${deals.length}</div>
-      <div class="kpi-sub">incl. gedraaid</div>
+    <div class="kpi accent">
+      <div class="kpi-label">Pipeline (potentieel)</div>
+      <div class="kpi-value">${fmtEur(pipelineWaarde)}</div>
+      <div class="kpi-sub">${pipelineLeads.length} open leads &amp; offertes</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">Leads deze maand</div>
@@ -913,9 +912,9 @@ function renderKPIs() {
       <div class="kpi-value">${fmtEur(maandKosten)}</div>
       <div class="kpi-sub">vast + Meta budget</div>
     </div>
-    <div class="kpi ${omzetGedraaid > maandKosten ? 'green' : 'red'}">
-      <div class="kpi-label">ROI (gedraaid)</div>
-      <div class="kpi-value">${maandKosten > 0 ? ((omzetGedraaid / maandKosten - 1)*100).toFixed(0) + '%' : '–'}</div>
+    <div class="kpi ${omzetWaarde >= maandKosten ? 'green' : 'red'}">
+      <div class="kpi-label">ROI op omzet</div>
+      <div class="kpi-value">${maandKosten > 0 ? 'x' + (omzetWaarde / maandKosten).toFixed(1) : '–'}</div>
       <div class="kpi-sub">omzet / mktg kosten</div>
     </div>
   `;
@@ -944,17 +943,17 @@ function renderChannelTable() {
   const channels = ['Koud bellen','Meta ads','Inbound','Terugkerend'];
   const maandKosten = { 'Koud bellen': 0, 'Meta ads': costs.nielVast + costs.metaDag*30, 'Inbound': costs.inbound, 'Terugkerend': 0 };
 
-  // koud bellen: count leads that came from koud bellen with status >= offerte (= afspraken)
   const koudAfspraken = leads.filter(l => l.bron === 'Koud bellen' && l.status !== 'Lead').length;
   maandKosten['Koud bellen'] = koudAfspraken * costs.koudPerAfspraak;
 
   const rows = channels.map(ch => {
     const chLeads = leads.filter(l => l.bron === ch);
     const deals = chLeads.filter(l => ['Deal gesloten','Tocht gedraaid'].includes(l.status));
-    const omzet = chLeads.filter(l => l.status === 'Tocht gedraaid').reduce((s,l) => s + l.waarde, 0);
+    const omzet = deals.reduce((s,l) => s + l.waarde, 0);
+    const pipeline = chLeads.filter(l => ['Lead','Offerte verstuurd'].includes(l.status)).reduce((s,l) => s + l.waarde, 0);
     const kosten = maandKosten[ch] || 0;
-    const cac = deals.length > 0 ? kosten / deals.length : null;
-    const roi = kosten > 0 ? omzet / kosten : null;
+    const cac = deals.length > 0 && kosten > 0 ? kosten / deals.length : null;
+    const roi = kosten > 0 && omzet > 0 ? omzet / kosten : null;
 
     const cacStr = cac !== null ? fmtEur(cac) : '–';
     let roiStr, roiCls;
@@ -966,12 +965,14 @@ function renderChannelTable() {
       <td>${badge(ch, bronClass(ch))}</td>
       <td>${chLeads.length}</td>
       <td>${deals.length}</td>
+      <td><strong>${omzet ? fmtEur(omzet) : '–'}</strong></td>
+      <td style="color:var(--accent)">${pipeline ? fmtEur(pipeline) : '–'}</td>
       <td>${cacStr}</td>
       <td class="roi-value ${roiCls}">${roiStr}</td>
     </tr>`;
   });
   const el = document.getElementById('channel-tbody');
-  el.innerHTML = rows.join('') || '<tr><td colspan="5" style="color:var(--fg2);text-align:center;padding:20px;">Geen data</td></tr>';
+  el.innerHTML = rows.join('') || '<tr><td colspan="7" style="color:var(--fg2);text-align:center;padding:20px;">Geen data</td></tr>';
 }
 
 function renderConvTable() {
