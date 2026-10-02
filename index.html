@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NEXA B2B Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: #e2e0d8;
+    --fg: #1a1917;
+    --fg2: #6b6960;
+    --accent: #1a4a8a;
+    --accent-light: #e8edf5;
+    --green: #1a6640;
+    --green-light: #e6f2ec;
+    --orange: #c45c1a;
+    --orange-light: #fdf0e6;
+    --red: #a02020;
+    --red-light: #fae8e8;
+    --gold: #8a6a1a;
+    --gold-light: #f5f0e0;
+    --purple: #5a2080;
+    --purple-light: #f0e8f5;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #111110;
+      --surface: #1c1c1a;
+      --surface2: #242422;
+      --border: #2e2e2a;
+      --fg: #e8e7e2;
+      --fg2: #888880;
+      --accent: #4a8ae8;
+      --accent-light: #1a2840;
+      --green: #4aaa70;
+      --green-light: #0f2a1a;
+      --orange: #e87a40;
+      --orange-light: #2a1a0a;
+      --red: #e05050;
+      --red-light: #2a0f0f;
+      --gold: #c8a040;
+      --gold-light: #2a2008;
+      --purple: #9a60d0;
+      --purple-light: #1e0f2a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #111110;
+    --surface: #1c1c1a;
+    --surface2: #242422;
+    --border: #2e2e2a;
+    --fg: #e8e7e2;
+    --fg2: #888880;
+    --accent: #4a8ae8;
+    --accent-light: #1a2840;
+    --green: #4aaa70;
+    --green-light: #0f2a1a;
+    --orange: #e87a40;
+    --orange-light: #2a1a0a;
+    --red: #e05050;
+    --red-light: #2a0f0f;
+    --gold: #c8a040;
+    --gold-light: #2a2008;
+    --purple: #9a60d0;
+    --purple-light: #1e0f2a;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0 }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* LAYOUT */
+  .app { display: flex; flex-direction: column; min-height: 100vh; }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 56px;
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 50;
+  }
+  .logo { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
+  .logo span { color: var(--accent); }
+  .header-tabs { display: flex; gap: 4px; flex: 1; }
+  .tab-btn {
+    background: none; border: none; cursor: pointer;
+    padding: 6px 14px; border-radius: 6px;
+    font: inherit; font-size: 13px; font-weight: 500;
+    color: var(--fg2); transition: background 0.15s, color 0.15s;
+  }
+  .tab-btn:hover { background: var(--surface2); color: var(--fg); }
+  .tab-btn.active { background: var(--accent-light); color: var(--accent); }
+  .theme-btn {
+    background: none; border: 1px solid var(--border); cursor: pointer;
+    padding: 6px 10px; border-radius: 6px; font: inherit; font-size: 13px;
+    color: var(--fg2); margin-left: auto;
+  }
+
+  .main { padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%; flex: 1; }
+
+  /* SECTIONS */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* KPI TILES */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg2); margin-bottom: 6px; }
+  .kpi-value { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .kpi-sub { font-size: 12px; color: var(--fg2); margin-top: 2px; }
+  .kpi.green .kpi-value { color: var(--green); }
+  .kpi.accent .kpi-value { color: var(--accent); }
+  .kpi.orange .kpi-value { color: var(--orange); }
+  .kpi.red .kpi-value { color: var(--red); }
+
+  /* FUNNEL */
+  .funnel-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .funnel-stage {
+    flex: 1;
+    min-width: 120px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .funnel-stage-name { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg2); margin-bottom: 6px; }
+  .funnel-count { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; }
+  .funnel-value { font-size: 12px; color: var(--fg2); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .funnel-stage.s-lead .funnel-count { color: var(--fg); }
+  .funnel-stage.s-offerte .funnel-count { color: var(--accent); }
+  .funnel-stage.s-deal .funnel-count { color: var(--gold); }
+  .funnel-stage.s-tocht .funnel-count { color: var(--green); }
+  .funnel-stage.s-verloren .funnel-count { color: var(--red); }
+
+  /* CHANNEL ROI TABLE */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 14px 18px;
+    font-weight: 600;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .card-header .sub { font-weight: 400; color: var(--fg2); font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; padding: 10px 18px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--fg2); background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .b-lead { background: var(--surface2); color: var(--fg2); }
+  .b-offerte { background: var(--accent-light); color: var(--accent); }
+  .b-deal { background: var(--gold-light); color: var(--gold); }
+  .b-tocht { background: var(--green-light); color: var(--green); }
+  .b-verloren { background: var(--red-light); color: var(--red); }
+  .b-koud { background: var(--purple-light); color: var(--purple); }
+  .b-meta { background: var(--accent-light); color: var(--accent); }
+  .b-inbound { background: var(--green-light); color: var(--green); }
+  .b-terugkerend { background: var(--gold-light); color: var(--gold); }
+
+  /* ROI BARS */
+  .roi-bar-wrap { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+  .roi-bar { height: 100%; border-radius: 4px; background: var(--green); transition: width 0.3s; }
+  .roi-bar.neg { background: var(--red); }
+
+  /* FORM PANEL */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px; }
+  @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 12px; font-weight: 600; color: var(--fg2); }
+  input, select, textarea {
+    font: inherit;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--fg);
+    font-size: 13px;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  textarea { resize: vertical; min-height: 64px; }
+  .form-actions { padding: 0 18px 18px; display: flex; gap: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;
+    font: inherit; font-size: 13px; font-weight: 600; transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-secondary { background: var(--surface2); color: var(--fg); border: 1px solid var(--border); }
+  .btn-danger { background: var(--red-light); color: var(--red); border: 1px solid transparent; }
+
+  /* COSTS SECTION */
+  .costs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; padding: 18px; }
+  .cost-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .cost-name { font-weight: 600; font-size: 13px; margin-bottom: 10px; }
+  .cost-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+  .cost-field label { font-size: 11px; color: var(--fg2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .cost-field input { font-size: 13px; }
+
+  /* LEADS TABLE ACTIONS */
+  .table-actions {
+    display: flex; gap: 8px; padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .search-input {
+    flex: 1; min-width: 180px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--fg);
+    font: inherit;
+    font-size: 13px;
+  }
+  .filter-select {
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--fg);
+    font: inherit;
+    font-size: 13px;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; padding: 16px;
+  }
+  .modal-overlay[hidden] { display: none !important; }
+  .modal {
+    background: var(--surface);
+    border-radius: 12px;
+    width: 100%; max-width: 560px;
+    max-height: 90vh; overflow-y: auto;
+    border: 1px solid var(--border);
+  }
+  .modal-header {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 600;
+  }
+  .modal-close {
+    background: none; border: none; cursor: pointer;
+    font-size: 18px; color: var(--fg2); padding: 4px; line-height: 1;
+  }
+
+  /* MONTH PICKER */
+  .month-controls {
+    display: flex; gap: 8px; align-items: center;
+    font-size: 13px; color: var(--fg2);
+  }
+  .month-controls input[type=month] {
+    padding: 5px 8px; font-size: 12px;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center; padding: 48px 24px;
+    color: var(--fg2); font-size: 13px;
+  }
+  .empty-state .icon { font-size: 32px; margin-bottom: 12px; }
+  .empty-state strong { color: var(--fg); display: block; margin-bottom: 4px; }
+
+  .del-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--fg2); padding: 4px 8px; border-radius: 4px;
+    font-size: 16px; transition: color 0.15s;
+  }
+  .del-btn:hover { color: var(--red); }
+
+  .edit-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--fg2); padding: 4px 8px; border-radius: 4px;
+    font-size: 13px; transition: color 0.15s;
+  }
+  .edit-btn:hover { color: var(--accent); }
+
+  @media (max-width: 700px) {
+    .main { padding: 12px; }
+    header { padding: 0 12px; }
+    .funnel-stage-name { font-size: 10px; }
+    td, th { padding: 10px 10px; }
+    .form-grid { padding: 12px; }
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
+
+  .roi-value { font-weight: 600; }
+  .roi-pos { color: var(--green); }
+  .roi-neg { color: var(--red); }
+  .roi-neutral { color: var(--fg2); }
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <div class="logo">NEXA <span>B2B</span></div>
+  <div class="header-tabs">
+    <button class="tab-btn active" onclick="showTab('dashboard')">Dashboard</button>
+    <button class="tab-btn" onclick="showTab('leads')">Leads</button>
+    <button class="tab-btn" onclick="showTab('costs')">Marketing</button>
+  </div>
+  <button class="theme-btn" onclick="toggleTheme()">🌓</button>
+</header>
+
+<div class="main">
+
+<!-- DASHBOARD -->
+<div class="section active" id="tab-dashboard">
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <div class="funnel-row" id="funnel-row"></div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">
+        Kanaal performance
+        <div class="month-controls">
+          <span>Maand:</span>
+          <input type="month" id="month-filter" onchange="renderAll()">
+        </div>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Kanaal</th>
+          <th>Leads</th>
+          <th>Deals</th>
+          <th>CAC</th>
+          <th>ROI</th>
+        </tr></thead>
+        <tbody id="channel-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Conversie per bron</div>
+      <table>
+        <thead><tr>
+          <th>Bron</th>
+          <th>Leads</th>
+          <th>→ Offerte</th>
+          <th>→ Deal</th>
+          <th>→ Tocht</th>
+        </tr></thead>
+        <tbody id="conv-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Recente leads</div>
+    <table>
+      <thead><tr>
+        <th>Organisatie</th>
+        <th>Bron</th>
+        <th>Status</th>
+        <th>Pax</th>
+        <th>Waarde</th>
+        <th>Datum</th>
+      </tr></thead>
+      <tbody id="recent-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- LEADS -->
+<div class="section" id="tab-leads">
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+      Nieuwe lead toevoegen
+    </div>
+    <div class="form-grid" id="lead-form">
+      <div class="form-group">
+        <label>Naam organisatie *</label>
+        <input type="text" id="f-naam" placeholder="bv. ASC Lustrum">
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="f-type">
+          <option value="Vereniging">Vereniging</option>
+          <option value="Bedrijf">Bedrijf</option>
+          <option value="Particulier">Particulier</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Bron</label>
+        <select id="f-bron">
+          <option value="Koud bellen">Koud bellen</option>
+          <option value="Meta ads">Meta ads</option>
+          <option value="Inbound">Inbound / eigen netwerk</option>
+          <option value="Terugkerend">Terugkerend</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="f-status">
+          <option value="Lead">Lead</option>
+          <option value="Offerte verstuurd">Offerte verstuurd</option>
+          <option value="Deal gesloten">Deal gesloten</option>
+          <option value="Tocht gedraaid">Tocht gedraaid</option>
+          <option value="Verloren">Verloren</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Verwachte waarde (€)</label>
+        <input type="number" id="f-waarde" placeholder="4500" min="0">
+      </div>
+      <div class="form-group">
+        <label>Aantal pax</label>
+        <input type="number" id="f-pax" placeholder="200" min="0">
+      </div>
+      <div class="form-group">
+        <label>Datum binnenkomst</label>
+        <input type="date" id="f-datum">
+      </div>
+      <div class="form-group">
+        <label>Contactpersoon</label>
+        <input type="text" id="f-contact" placeholder="Naam / email">
+      </div>
+      <div class="form-group full">
+        <label>Notities</label>
+        <textarea id="f-notities" placeholder="Extra info, opvolgacties…"></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveLead()">Opslaan</button>
+      <button class="btn btn-secondary" onclick="clearForm()">Leegmaken</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="table-actions">
+      <input type="text" class="search-input" id="leads-search" placeholder="Zoek organisatie…" oninput="renderLeadsTable()">
+      <select class="filter-select" id="filter-status" onchange="renderLeadsTable()">
+        <option value="">Alle statussen</option>
+        <option>Lead</option>
+        <option>Offerte verstuurd</option>
+        <option>Deal gesloten</option>
+        <option>Tocht gedraaid</option>
+        <option>Verloren</option>
+      </select>
+      <select class="filter-select" id="filter-bron" onchange="renderLeadsTable()">
+        <option value="">Alle bronnen</option>
+        <option>Koud bellen</option>
+        <option>Meta ads</option>
+        <option>Inbound</option>
+        <option>Terugkerend</option>
+      </select>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Organisatie</th>
+        <th>Type</th>
+        <th>Bron</th>
+        <th>Status</th>
+        <th>Pax</th>
+        <th>Waarde</th>
+        <th>Datum</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="leads-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- COSTS / MARKETING -->
+<div class="section" id="tab-costs">
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+      Marketingkosten instellen
+      <button class="btn btn-primary" onclick="saveCosts()">Opslaan</button>
+    </div>
+    <div class="costs-grid">
+      <div class="cost-card">
+        <div class="cost-name">📞 Koud bellen</div>
+        <div class="cost-field">
+          <label>Kosten per ingeplande afspraak (€)</label>
+          <input type="number" id="c-koud-per-afspraak" placeholder="450">
+        </div>
+        <div class="cost-field">
+          <label>Uur/maand (optioneel)</label>
+          <input type="number" id="c-koud-uren" placeholder="Bijv. 20">
+        </div>
+      </div>
+      <div class="cost-card">
+        <div class="cost-name">📱 Meta ads (Niel)</div>
+        <div class="cost-field">
+          <label>Vast beheer per maand (€)</label>
+          <input type="number" id="c-niel-vast" placeholder="1700">
+        </div>
+        <div class="cost-field">
+          <label>Ad budget per dag (€)</label>
+          <input type="number" id="c-meta-dag" placeholder="25">
+        </div>
+      </div>
+      <div class="cost-card">
+        <div class="cost-name">🔄 Inbound / netwerk</div>
+        <div class="cost-field">
+          <label>Maandelijks budget (€, bijv. events)</label>
+          <input type="number" id="c-inbound" placeholder="0">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Maandelijkse kosten overzicht <span class="sub" id="costs-month-label"></span></div>
+    <table>
+      <thead><tr>
+        <th>Kanaal</th>
+        <th>Vaste kosten/mnd</th>
+        <th>Var. kosten/mnd</th>
+        <th>Totaal/mnd</th>
+        <th>Gegenereerde omzet</th>
+        <th>ROI</th>
+      </tr></thead>
+      <tbody id="costs-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      Lead bewerken
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-grid" id="edit-form">
+      <div class="form-group">
+        <label>Naam organisatie *</label>
+        <input type="text" id="e-naam">
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="e-type">
+          <option value="Vereniging">Vereniging</option>
+          <option value="Bedrijf">Bedrijf</option>
+          <option value="Particulier">Particulier</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Bron</label>
+        <select id="e-bron">
+          <option value="Koud bellen">Koud bellen</option>
+          <option value="Meta ads">Meta ads</option>
+          <option value="Inbound">Inbound / eigen netwerk</option>
+          <option value="Terugkerend">Terugkerend</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="e-status">
+          <option value="Lead">Lead</option>
+          <option value="Offerte verstuurd">Offerte verstuurd</option>
+          <option value="Deal gesloten">Deal gesloten</option>
+          <option value="Tocht gedraaid">Tocht gedraaid</option>
+          <option value="Verloren">Verloren</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Verwachte waarde (€)</label>
+        <input type="number" id="e-waarde" min="0">
+      </div>
+      <div class="form-group">
+        <label>Aantal pax</label>
+        <input type="number" id="e-pax" min="0">
+      </div>
+      <div class="form-group">
+        <label>Datum binnenkomst</label>
+        <input type="date" id="e-datum">
+      </div>
+      <div class="form-group">
+        <label>Contactpersoon</label>
+        <input type="text" id="e-contact">
+      </div>
+      <div class="form-group full">
+        <label>Notities</label>
+        <textarea id="e-notities"></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="updateLead()">Opslaan</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// === SUPABASE ===
+const SUPABASE_URL = 'https://hzyilixvqcwvywystyrm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6eWlsaXh2cWN3dnl3eXN0eXJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NjE0MzMsImV4cCI6MjEwNjUzNzQzM30.MrYgYCPI_zo1Owjzo_siV1ZlssdRL0UTc9mAc3Makmc';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// === DATA LAYER ===
+let leads = [];
+let costs = { koudPerAfspraak: 450, koudUren: 0, nielVast: 1700, metaDag: 25, inbound: 0 };
+let editingId = null;
+let loading = false;
+
+function showStatus(msg, isError) {
+  let el = document.getElementById('status-bar');
+  if (!el) { el = document.createElement('div'); el.id = 'status-bar'; el.style.cssText='position:fixed;bottom:16px;right:16px;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;z-index:200;transition:opacity 0.3s;'; document.body.appendChild(el); }
+  el.textContent = msg;
+  el.style.background = isError ? 'var(--red)' : 'var(--green)';
+  el.style.color = '#fff';
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.style.opacity = '0', 2500);
+}
+
+async function load() {
+  loading = true;
+  try {
+    const [leadsRes, costsRes] = await Promise.all([
+      sb.from('leads').select('*').order('created_at', { ascending: false }),
+      sb.from('costs').select('*').eq('id', 1).single()
+    ]);
+    if (leadsRes.data) leads = leadsRes.data.map(dbToLead);
+    if (costsRes.data) costs = dbToCosts(costsRes.data);
+  } catch(e) { showStatus('Verbindingsfout', true); }
+  loading = false;
+}
+
+function dbToLead(r) {
+  return { id: r.id, naam: r.naam, type: r.type, bron: r.bron, status: r.status, waarde: +r.waarde||0, pax: +r.pax||0, datum: r.datum||'', contact: r.contact||'', notities: r.notities||'' };
+}
+function dbToCosts(r) {
+  return { koudPerAfspraak: +r.koud_per_afspraak||450, koudUren: +r.koud_uren||0, nielVast: +r.niel_vast||1700, metaDag: +r.meta_dag||25, inbound: +r.inbound||0 };
+}
+
+async function save() {
+  // leads are saved individually via insert/update/delete
+}
+
+async function saveCosts() {
+  costs.koudPerAfspraak = +document.getElementById('c-koud-per-afspraak').value || 450;
+  costs.koudUren = +document.getElementById('c-koud-uren').value || 0;
+  costs.nielVast = +document.getElementById('c-niel-vast').value || 1700;
+  costs.metaDag = +document.getElementById('c-meta-dag').value || 25;
+  costs.inbound = +document.getElementById('c-inbound').value || 0;
+  const { error } = await sb.from('costs').update({
+    koud_per_afspraak: costs.koudPerAfspraak,
+    koud_uren: costs.koudUren,
+    niel_vast: costs.nielVast,
+    meta_dag: costs.metaDag,
+    inbound: costs.inbound
+  }).eq('id', 1);
+  if (error) showStatus('Opslaan mislukt', true);
+  else showStatus('Kosten opgeslagen ✓');
+  renderAll();
+}
+
+function uid() { return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+// === TABS ===
+function showTab(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.getAttribute('onclick').includes("'" + tab + "'")) b.classList.add('active');
+  });
+  renderAll();
+}
+
+// === THEME ===
+function toggleTheme() {
+  const root = document.documentElement;
+  const cur = root.getAttribute('data-theme');
+  root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+}
+
+// === FORM ===
+function clearForm() {
+  ['f-naam','f-contact','f-notities'].forEach(id => document.getElementById(id).value = '');
+  ['f-waarde','f-pax'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-datum').value = todayStr();
+  document.getElementById('f-type').value = 'Vereniging';
+  document.getElementById('f-bron').value = 'Koud bellen';
+  document.getElementById('f-status').value = 'Lead';
+}
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function saveLead() {
+  const naam = document.getElementById('f-naam').value.trim();
+  if (!naam) { alert('Naam organisatie is verplicht.'); return; }
+  const row = {
+    naam,
+    type: document.getElementById('f-type').value,
+    bron: document.getElementById('f-bron').value,
+    status: document.getElementById('f-status').value,
+    waarde: +document.getElementById('f-waarde').value || 0,
+    pax: +document.getElementById('f-pax').value || 0,
+    datum: document.getElementById('f-datum').value || todayStr(),
+    contact: document.getElementById('f-contact').value.trim(),
+    notities: document.getElementById('f-notities').value.trim(),
+  };
+  const { data, error } = await sb.from('leads').insert(row).select().single();
+  if (error) { showStatus('Opslaan mislukt', true); return; }
+  leads.unshift(dbToLead(data));
+  clearForm();
+  showStatus('Lead opgeslagen ✓');
+  renderAll();
+}
+
+async function deleteLead(id) {
+  if (!confirm('Lead verwijderen?')) return;
+  const { error } = await sb.from('leads').delete().eq('id', id);
+  if (error) { showStatus('Verwijderen mislukt', true); return; }
+  leads = leads.filter(l => l.id !== id);
+  showStatus('Lead verwijderd');
+  renderAll();
+}
+
+function openEdit(id) {
+  const l = leads.find(x => x.id === id);
+  if (!l) return;
+  editingId = id;
+  document.getElementById('e-naam').value = l.naam;
+  document.getElementById('e-type').value = l.type;
+  document.getElementById('e-bron').value = l.bron;
+  document.getElementById('e-status').value = l.status;
+  document.getElementById('e-waarde').value = l.waarde || '';
+  document.getElementById('e-pax').value = l.pax || '';
+  document.getElementById('e-datum').value = l.datum || '';
+  document.getElementById('e-contact').value = l.contact || '';
+  document.getElementById('e-notities').value = l.notities || '';
+  document.getElementById('edit-modal').hidden = false;
+}
+function closeModal() {
+  document.getElementById('edit-modal').hidden = true;
+  editingId = null;
+}
+async function updateLead() {
+  const naam = document.getElementById('e-naam').value.trim();
+  if (!naam) { alert('Naam is verplicht.'); return; }
+  const idx = leads.findIndex(x => x.id === editingId);
+  if (idx < 0) return;
+  const row = {
+    naam,
+    type: document.getElementById('e-type').value,
+    bron: document.getElementById('e-bron').value,
+    status: document.getElementById('e-status').value,
+    waarde: +document.getElementById('e-waarde').value || 0,
+    pax: +document.getElementById('e-pax').value || 0,
+    datum: document.getElementById('e-datum').value,
+    contact: document.getElementById('e-contact').value.trim(),
+    notities: document.getElementById('e-notities').value.trim(),
+  };
+  const { error } = await sb.from('leads').update(row).eq('id', editingId);
+  if (error) { showStatus('Opslaan mislukt', true); return; }
+  leads[idx] = { ...leads[idx], ...row };
+  showStatus('Lead bijgewerkt ✓');
+  closeModal();
+  renderAll();
+}
+
+// === HELPERS ===
+const fmtEur = v => '€' + v.toLocaleString('nl-NL', {maximumFractionDigits: 0});
+const fmtPct = v => (v * 100).toFixed(0) + '%';
+const bronClass = b => ({'Koud bellen':'koud','Meta ads':'meta','Inbound':'inbound','Terugkerend':'terugkerend'}[b] || 'koud');
+const statusClass = s => ({'Lead':'lead','Offerte verstuurd':'offerte','Deal gesloten':'deal','Tocht gedraaid':'tocht','Verloren':'verloren'}[s] || 'lead');
+
+function badge(text, cls) {
+  return `<span class="badge b-${cls}">${text}</span>`;
+}
+
+// === RENDER ===
+function renderAll() {
+  renderKPIs();
+  renderFunnel();
+  renderChannelTable();
+  renderConvTable();
+  renderRecentTable();
+  renderLeadsTable();
+  renderCostsTable();
+  loadCostsForm();
+}
+
+function getCurrentMonth() {
+  const el = document.getElementById('month-filter');
+  return el ? el.value : '';
+}
+
+function filterByMonth(arr) {
+  const m = getCurrentMonth();
+  if (!m) return arr;
+  return arr.filter(l => l.datum && l.datum.startsWith(m));
+}
+
+function renderKPIs() {
+  const all = leads;
+  const month = filterByMonth(leads);
+  const pipeline = all.filter(l => ['Lead','Offerte verstuurd','Deal gesloten'].includes(l.status)).reduce((s,l) => s + l.waarde, 0);
+  const deals = all.filter(l => ['Deal gesloten','Tocht gedraaid'].includes(l.status));
+  const gedraaid = all.filter(l => l.status === 'Tocht gedraaid');
+  const omzetGedraaid = gedraaid.reduce((s,l) => s + l.waarde, 0);
+  const maandKosten = costs.nielVast + costs.metaDag * 30 + costs.inbound;
+
+  // leads this month
+  const now = new Date();
+  const thisMonth = now.toISOString().slice(0,7);
+  const monthLeads = all.filter(l => l.datum && l.datum.startsWith(thisMonth));
+  const weekAgo = new Date(now - 7*24*3600*1000).toISOString().slice(0,10);
+  const weekLeads = all.filter(l => l.datum && l.datum >= weekAgo);
+
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi accent">
+      <div class="kpi-label">Pipeline waarde</div>
+      <div class="kpi-value">${fmtEur(pipeline)}</div>
+      <div class="kpi-sub">${all.filter(l=>l.status!=='Verloren').length} actieve leads</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Omzet gedraaid</div>
+      <div class="kpi-value">${fmtEur(omzetGedraaid)}</div>
+      <div class="kpi-sub">${gedraaid.length} tochten</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Deals gesloten</div>
+      <div class="kpi-value">${deals.length}</div>
+      <div class="kpi-sub">incl. gedraaid</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Leads deze maand</div>
+      <div class="kpi-value">${monthLeads.length}</div>
+      <div class="kpi-sub">${weekLeads.length} deze week</div>
+    </div>
+    <div class="kpi orange">
+      <div class="kpi-label">Mktg kosten/mnd</div>
+      <div class="kpi-value">${fmtEur(maandKosten)}</div>
+      <div class="kpi-sub">vast + Meta budget</div>
+    </div>
+    <div class="kpi ${omzetGedraaid > maandKosten ? 'green' : 'red'}">
+      <div class="kpi-label">ROI (gedraaid)</div>
+      <div class="kpi-value">${maandKosten > 0 ? ((omzetGedraaid / maandKosten - 1)*100).toFixed(0) + '%' : '–'}</div>
+      <div class="kpi-sub">omzet / mktg kosten</div>
+    </div>
+  `;
+}
+
+function renderFunnel() {
+  const stages = [
+    {key:'Lead', cls:'s-lead'},
+    {key:'Offerte verstuurd', cls:'s-offerte'},
+    {key:'Deal gesloten', cls:'s-deal'},
+    {key:'Tocht gedraaid', cls:'s-tocht'},
+    {key:'Verloren', cls:'s-verloren'},
+  ];
+  document.getElementById('funnel-row').innerHTML = stages.map(s => {
+    const items = leads.filter(l => l.status === s.key);
+    const val = items.reduce((a,l) => a+l.waarde, 0);
+    return `<div class="funnel-stage ${s.cls}">
+      <div class="funnel-stage-name">${s.key}</div>
+      <div class="funnel-count">${items.length}</div>
+      <div class="funnel-value">${fmtEur(val)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderChannelTable() {
+  const channels = ['Koud bellen','Meta ads','Inbound','Terugkerend'];
+  const maandKosten = { 'Koud bellen': 0, 'Meta ads': costs.nielVast + costs.metaDag*30, 'Inbound': costs.inbound, 'Terugkerend': 0 };
+
+  // koud bellen: count leads that came from koud bellen with status >= offerte (= afspraken)
+  const koudAfspraken = leads.filter(l => l.bron === 'Koud bellen' && l.status !== 'Lead').length;
+  maandKosten['Koud bellen'] = koudAfspraken * costs.koudPerAfspraak;
+
+  const rows = channels.map(ch => {
+    const chLeads = leads.filter(l => l.bron === ch);
+    const deals = chLeads.filter(l => ['Deal gesloten','Tocht gedraaid'].includes(l.status));
+    const omzet = chLeads.filter(l => l.status === 'Tocht gedraaid').reduce((s,l) => s + l.waarde, 0);
+    const kosten = maandKosten[ch] || 0;
+    const cac = deals.length > 0 ? kosten / deals.length : null;
+    const roi = kosten > 0 ? omzet / kosten : null;
+
+    const cacStr = cac !== null ? fmtEur(cac) : '–';
+    let roiStr, roiCls;
+    if (roi === null) { roiStr = '–'; roiCls = 'roi-neutral'; }
+    else if (roi >= 1) { roiStr = 'x' + roi.toFixed(1); roiCls = 'roi-pos'; }
+    else { roiStr = 'x' + roi.toFixed(1); roiCls = 'roi-neg'; }
+
+    return `<tr>
+      <td>${badge(ch, bronClass(ch))}</td>
+      <td>${chLeads.length}</td>
+      <td>${deals.length}</td>
+      <td>${cacStr}</td>
+      <td class="roi-value ${roiCls}">${roiStr}</td>
+    </tr>`;
+  });
+  const el = document.getElementById('channel-tbody');
+  el.innerHTML = rows.join('') || '<tr><td colspan="5" style="color:var(--fg2);text-align:center;padding:20px;">Geen data</td></tr>';
+}
+
+function renderConvTable() {
+  const channels = ['Koud bellen','Meta ads','Inbound','Terugkerend'];
+  const pct = (a,b) => b > 0 ? fmtPct(a/b) : '–';
+  const rows = channels.map(ch => {
+    const all = leads.filter(l => l.bron === ch);
+    const offerte = all.filter(l => ['Offerte verstuurd','Deal gesloten','Tocht gedraaid'].includes(l.status));
+    const deal = all.filter(l => ['Deal gesloten','Tocht gedraaid'].includes(l.status));
+    const tocht = all.filter(l => l.status === 'Tocht gedraaid');
+    return `<tr>
+      <td>${badge(ch, bronClass(ch))}</td>
+      <td>${all.length}</td>
+      <td>${pct(offerte.length, all.length)}</td>
+      <td>${pct(deal.length, all.length)}</td>
+      <td>${pct(tocht.length, all.length)}</td>
+    </tr>`;
+  });
+  document.getElementById('conv-tbody').innerHTML = rows.join('') || '<tr><td colspan="5" style="color:var(--fg2);text-align:center;">Geen data</td></tr>';
+}
+
+function renderRecentTable() {
+  const recent = [...leads].sort((a,b) => b.datum > a.datum ? 1 : -1).slice(0, 8);
+  if (!recent.length) {
+    document.getElementById('recent-tbody').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div>Nog geen leads</div></div></td></tr>';
+    return;
+  }
+  document.getElementById('recent-tbody').innerHTML = recent.map(l => `<tr>
+    <td><strong>${l.naam}</strong>${l.contact ? `<br><span style="font-size:11px;color:var(--fg2)">${l.contact}</span>` : ''}</td>
+    <td>${badge(l.bron, bronClass(l.bron))}</td>
+    <td>${badge(l.status, statusClass(l.status))}</td>
+    <td>${l.pax || '–'}</td>
+    <td>${l.waarde ? fmtEur(l.waarde) : '–'}</td>
+    <td style="color:var(--fg2);font-size:12px;">${l.datum || '–'}</td>
+  </tr>`).join('');
+}
+
+function renderLeadsTable() {
+  const search = (document.getElementById('leads-search')?.value || '').toLowerCase();
+  const fStatus = document.getElementById('filter-status')?.value || '';
+  const fBron = document.getElementById('filter-bron')?.value || '';
+
+  let filtered = leads.filter(l => {
+    if (search && !l.naam.toLowerCase().includes(search)) return false;
+    if (fStatus && l.status !== fStatus) return false;
+    if (fBron && l.bron !== fBron) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('leads-tbody');
+  if (!tbody) return;
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+      <div class="icon">📋</div>
+      <strong>Geen leads gevonden</strong>
+      Voeg je eerste lead toe hierboven
+    </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(l => `<tr>
+    <td><strong>${l.naam}</strong>${l.contact ? `<br><span style="font-size:11px;color:var(--fg2)">${l.contact}</span>` : ''}${l.notities ? `<br><span style="font-size:11px;color:var(--fg2);white-space:pre-wrap;">${l.notities.slice(0,80)}${l.notities.length>80?'…':''}</span>` : ''}</td>
+    <td><span style="font-size:12px;color:var(--fg2)">${l.type||'–'}</span></td>
+    <td>${badge(l.bron, bronClass(l.bron))}</td>
+    <td>${badge(l.status, statusClass(l.status))}</td>
+    <td style="font-variant-numeric:tabular-nums">${l.pax || '–'}</td>
+    <td style="font-variant-numeric:tabular-nums">${l.waarde ? fmtEur(l.waarde) : '–'}</td>
+    <td style="color:var(--fg2);font-size:12px;white-space:nowrap">${l.datum || '–'}</td>
+    <td style="white-space:nowrap">
+      <button class="edit-btn" onclick="openEdit('${l.id}')">✏️</button>
+      <button class="del-btn" onclick="deleteLead('${l.id}')">🗑</button>
+    </td>
+  </tr>`).join('');
+}
+
+function renderCostsTable() {
+  const channels = [
+    { name: 'Koud bellen', bron: 'Koud bellen' },
+    { name: 'Meta ads (Niel)', bron: 'Meta ads' },
+    { name: 'Inbound / netwerk', bron: 'Inbound' },
+    { name: 'Terugkerend', bron: 'Terugkerend' },
+  ];
+
+  const koudAfspraken = leads.filter(l => l.bron === 'Koud bellen' && l.status !== 'Lead').length;
+  const maandKosten = {
+    'Koud bellen': { vast: 0, var: koudAfspraken * costs.koudPerAfspraak },
+    'Meta ads (Niel)': { vast: costs.nielVast, var: costs.metaDag * 30 },
+    'Inbound / netwerk': { vast: costs.inbound, var: 0 },
+    'Terugkerend': { vast: 0, var: 0 },
+  };
+
+  const rows = channels.map(ch => {
+    const k = maandKosten[ch.name];
+    const totaal = k.vast + k.var;
+    const omzet = leads.filter(l => l.bron === ch.bron && l.status === 'Tocht gedraaid').reduce((s,l) => s+l.waarde, 0);
+    const roi = totaal > 0 ? omzet / totaal : null;
+    let roiStr, roiCls;
+    if (roi === null) { roiStr = '–'; roiCls = 'roi-neutral'; }
+    else if (roi >= 1) { roiStr = `x${roi.toFixed(1)} 🟢`; roiCls = 'roi-pos'; }
+    else { roiStr = `x${roi.toFixed(1)} 🔴`; roiCls = 'roi-neg'; }
+
+    return `<tr>
+      <td><strong>${ch.name}</strong></td>
+      <td>${k.vast ? fmtEur(k.vast) : '–'}</td>
+      <td>${k.var ? fmtEur(k.var) : '–'}</td>
+      <td><strong>${totaal ? fmtEur(totaal) : '–'}</strong></td>
+      <td>${omzet ? fmtEur(omzet) : '–'}</td>
+      <td class="roi-value ${roiCls}">${roiStr}</td>
+    </tr>`;
+  });
+  const el = document.getElementById('costs-tbody');
+  if (el) el.innerHTML = rows.join('');
+
+  // update label
+  const now = new Date();
+  const lbl = document.getElementById('costs-month-label');
+  if (lbl) lbl.textContent = `${now.toLocaleString('nl-NL',{month:'long'})} ${now.getFullYear()}`;
+}
+
+function loadCostsForm() {
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  set('c-koud-per-afspraak', costs.koudPerAfspraak);
+  set('c-koud-uren', costs.koudUren || '');
+  set('c-niel-vast', costs.nielVast);
+  set('c-meta-dag', costs.metaDag);
+  set('c-inbound', costs.inbound || '');
+}
+
+// === INIT ===
+document.getElementById('f-datum').value = todayStr();
+document.getElementById('month-filter').value = new Date().toISOString().slice(0,7);
+load().then(() => renderAll());
+</script>
+</body>
+</html>
